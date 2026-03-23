@@ -15,16 +15,12 @@ const date =
 
 async function main() {
 
-
-  // Launch real Chrome — headless: false means you can watch it
   const browser = await puppeteer.launch({
     headless: false,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
   const page = await browser.newPage();
-
-  // Set a real browser User-Agent so CloudFront does not block us
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
     "AppleWebKit/537.36 (KHTML, like Gecko) " +
@@ -32,7 +28,6 @@ async function main() {
   );
 
   // STEP 1 — open the login page
-  console.log("Opening login page...");
   await page.goto("https://rippner.clubautomation.com", {
     waitUntil: "networkidle2",
   });
@@ -49,8 +44,6 @@ async function main() {
 
   // STEP 4 — check where we landed
   const finalUrl = page.url();
-  console.log("Final URL: " + finalUrl);
-
   if (!finalUrl.includes("/member") || finalUrl.includes("/login")) {
     console.error("Login failed — still on login page");
     fs.writeFileSync("debug-failed.html", await page.content(), "utf8");
@@ -91,8 +84,7 @@ async function main() {
   await page.select('select[name="court"]', "-1");
  
   // Host = Olya Velichko (value="57325")
-  console.log("Selecting host: Olya Velichko");
-  await page.select('select[name="host"]', "57325");
+  await page.select('select[name="host"]',   credentials.UserID, { delay: 50 });
  
   // Clear the field first then type the date
   await page.$eval('input[name="date"]', el => el.value = "");
