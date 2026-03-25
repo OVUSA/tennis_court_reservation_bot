@@ -84,11 +84,21 @@ async function main() {
   await page.select('select[name="court"]', "-1");
  
   // Host = Olya Velichko (value="57325")
-  await page.select('select[name="host"]',   credentials.UserID, { delay: 50 });
+  await page.select('select[name="host"]', credentials.UserID);
  
   // Clear the field first then type the date
-  await page.$eval('input[name="date"]', el => el.value = "");
-  await page.type('input[name="date"]', date, { delay: 50 });
+  await page.$eval('input[name="date"]', (el, dateValue) => {
+    el.value = dateValue;
+    
+    // Trigger standard JS events
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    
+    // If jQuery is globally available on the window, trigger it natively
+    if (window.jQuery) {
+        window.jQuery(el).trigger('change');
+    }
+}, date);
  
     console.log("Selecting interval: 90 Min");
     await page.evaluate(() => {
@@ -96,10 +106,10 @@ async function main() {
         });
 
 //  console.log("Selecting time from: 6:00 PM");
-  await page.select('select[name="timeFrom"]', "18");
+  await page.select('select[name="timeFrom"]', "10");
 
  // console.log("Selecting time to: 9:00 PM");
-  await page.select('select[name="timeTo"]', "21");
+  await page.select('select[name="timeTo"]', "14");
  
   // ── STEP 7: Click Search ─────────────────────────────────────────
 
@@ -118,17 +128,11 @@ console.log("Clicking Search...");
   const resultsHtml = await page.content();
   fs.writeFileSync("debug-results.html", resultsHtml, "utf8");
   console.log("✅ Results saved → debug-results.html");
- 
-  // Check what came back
-  if (resultsHtml.includes("No available times")) {
-    console.log("No courts available for this date/time");
-  } else if (resultsHtml.includes("r-line available")) {
-    console.log("Available courts found — open debug-results.html");
-  } else {
-    console.log("⚠️  Unexpected result — open debug-results.html to inspect");
-  }
 
-  await browser.close();
+
+  console.log("No courts available for this date/time");
+
+ // await browser.close();
 }
 
 main().catch(function(err) {
