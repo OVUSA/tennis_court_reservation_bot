@@ -1,7 +1,21 @@
 /**
  * Uses real Chrome to log in — works on Node 16.
  */
+// const IS_LAMBDA = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 
+// let browser;
+// if (IS_LAMBDA) {
+//   const chromium  = require("@sparticuz/chromium");
+//   const puppeteer = require("puppeteer-core");
+//   browser = await puppeteer.launch({
+//     args:           chromium.args,
+//     executablePath: await chromium.executablePath(),
+//     headless:       true,
+//   });
+// } else {
+//   const puppeteer = require("puppeteer");
+//   browser = await puppeteer.launch({ headless: false });
+// }
 const puppeteer   = require("puppeteer");
 const fs          = require("fs");
 const credentials = require("./credentials.json");
@@ -89,16 +103,16 @@ async function main() {
   // Clear the field first then type the date
   await page.$eval('input[name="date"]', (el, dateValue) => {
     el.value = dateValue;
-    
-    // Trigger standard JS events
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
-    
-    // If jQuery is globally available on the window, trigger it natively
     if (window.jQuery) {
-        window.jQuery(el).trigger('change');
+      window.jQuery(el).trigger('change');
     }
-}, date);
+  }, date);
+ 
+  // Wait for time selects to appear after date change
+    await page.waitForSelector('select[name="timeFrom"]', { timeout: 5000 });
+    await page.waitForSelector('select[name="timeTo"]', { timeout: 5000 });
  
     console.log("Selecting interval: 90 Min");
     await page.evaluate(() => {
@@ -114,19 +128,15 @@ async function main() {
   // ── STEP 7: Click Search ─────────────────────────────────────────
 
 console.log("Clicking Search...");
- 
+
   await Promise.all([
-    // Wait for the AJAX POST response from the server
-    page.waitForResponse(
-      res => res.url().includes("reserve-court-new") && res.request().method() === "POST",
-      { timeout: 15000 }
-    ),
-    page.click('#reserve-court-search'),
+    page.waitForFunction(() => !document.querySelector('#times-to-reserve-container').innerText.includes('Click "Search"')),
+    page.click('button[name="reserve-court-search"]'),
   ]);
- 
+
   // ── STEP 8: Read results ─────────────────────────────────────────
   const resultsHtml = await page.content();
- //fs.writeFileSync("debug-results.html", resultsHtml, "utf8");
+ fs.writeFileSync("debug-results.html", resultsHtml, "utf8");
 
 
   if (resultsHtml.includes("No available times based on your search criteria")) {
@@ -134,6 +144,7 @@ console.log("Clicking Search...");
       return;
     }
 
+    
  // await browser.close();
 }
 
