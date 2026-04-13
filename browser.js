@@ -6,11 +6,15 @@ export async function initBrowser(isLambda) {
   
   if (isLambda) {
     const { default: chromium } = await import("@sparticuz/chromium");
-    const { default: puppeteer } = await import("puppeteer-core");
+    const { default: puppeteer } = await import("puppeteer-core");  
+    chromium.setGraphicsMode = false; 
+
     browser = await puppeteer.launch({
       args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
-      headless: true,
+      headless: chromium.headless, // Use the package's default (true)
+      ignoreHTTPSErrors: true,
     });
   } else {
     const { default: puppeteer } = await import("puppeteer");
