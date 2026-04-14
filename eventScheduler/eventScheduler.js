@@ -20,6 +20,7 @@ export const handler = async (event) => {
             await client.send(new CreateScheduleCommand({
                 Name: `TennisBooking_${Date.now()}`,
                 ScheduleExpression: `at(${scheduleTime})`,
+                ScheduleExpressionTimezone: "America/Chicago",
                 Target: {
                     // Убедись, что эти переменные прописаны в Configuration -> Environment Variables
                     Arn: "arn:aws:lambda:us-east-1:41232:function:Tennis-Booker-Script",
