@@ -15,6 +15,7 @@ import {
   confirmReservation,
   cancelReservation,
 } from "./reservation.js";
+import { pathToFileURL } from "node:url";
 
 export const main = async () => {
   validate();
@@ -78,7 +79,12 @@ export const main = async () => {
         );
         reservationSuccessful = true;
       } else {
-        console.error("❌ Failed to confirm reservation details on " + date);
+        console.error(`❌ Failed to confirm reservation details on  + ${date}`);
+        await sendTelegram(
+          `❌ Failed to confirm reservation details on " + ${date}`,
+          TELEGRAM_TOKEN,
+          TELEGRAM_CHAT_ID
+        );
         await cancelReservation(page);
         searchDate = addDays(searchDate, 1);
       }
@@ -87,12 +93,15 @@ export const main = async () => {
     if (!reservationSuccessful && attempt >= maxRetries) {
       console.error(`⚠️  Could not find courts after checking ${maxRetries} consecutive days`);
     }
+    return { reservationSuccessful, attempts: attempt };
   } finally {
     await browser.close();
   }
 }
-
-main().catch(function(err) {
-  console.error("❌ Unexpected error: " + err.message);
-  // process.exit(1);
-});
+const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectRun) {
+  main().catch(function(err) {
+    console.error("❌ Unexpected error: " + err.message);
+    // process.exit(1);
+  });
+}
