@@ -8,7 +8,7 @@ export async function login(page, username, password) {
   await page.type('input[name="password"]', password, { delay: 50 });
   
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "networkidle2", timeout: 15000 }),
+    page.waitForNavigation({ waitUntil: "networkidle2", timeout: 10000 }),
     page.click('button[type="submit"]'),
   ]);
   
@@ -57,8 +57,8 @@ export async function fillSearchForm(page, userId, formattedDate, isWeekday) {
   await page.evaluate(() => { document.querySelector("#interval-60").click(); });
 
   // Set time window
-  const timeFrom = isWeekday ? "10" : "18";
-  const timeTo = isWeekday ? "12" : "21";
+  const timeFrom = "18" ;
+  const timeTo =  "22";
   console.log(`Date check: ${formattedDate} is ${isWeekday ? "weekday" : "weekend"}`);
 
   const selectedTimes = await page.evaluate((from, to) => {
@@ -89,7 +89,7 @@ export async function searchCourts(page) {
   await Promise.all([
     page.waitForResponse(
       (res) => res.url().includes("reserve-court-new") && res.request().method() === "POST",
-      { timeout: 30000 }
+      { timeout: 10000 }
     ),
     page.evaluate(() => { document.querySelector("#reserve-court-search").click(); }),
 
@@ -99,7 +99,7 @@ export async function searchCourts(page) {
   // Only then is it safe to read results and decide whether to retry.
   // Wait 1 minute for the site to populate results
   console.log("Waiting 60 seconds for results to load...");
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  await new Promise(resolve => setTimeout(resolve, 100));
 
   // Now check what's in the DOM
   const hasTimeSlots = await page.evaluate(() => {
@@ -126,12 +126,12 @@ export async function getEarliestSlot(page) {
   const time = await page.evaluate((el) => (el.textContent || "").trim(), firstLink);
 
   // Click the same handle we just read (avoids re-query race)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+  //  await new Promise((resolve) => setTimeout(resolve, 500));
 
   await firstLink.click({ delay: 120 });
 
   // Give site time to render next step after slot click
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
   return { time };
 }
@@ -151,7 +151,7 @@ export async function confirmReservation(page, date, slotTime) {
   }
 
   console.log("Confirmation details verified, waiting for Confirm button...");
-  await page.waitForSelector("#confirm", { timeout: 10000 });
+  await page.waitForSelector("#confirm", { timeout: 1000 });
   
   await page.evaluate(() => {
     const btn = document.querySelector("#confirm");
